@@ -20,3 +20,6 @@ The Qr needs to be activated in order to visualize the infos it carries.
 <img src="/images/example5.png" height="360" width="640"/>
 <img src="/images/example6.png" height="360" width="640"/>
 
+
+<img src="/images/example7.jpeg" height="640" width="360"/>
+
