@@ -1,0 +1,234 @@
+<html>
+
+  <head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="./includes/jquery.js"></script>
+    <script src="./includes/qrious.js"></script>
+
+    <title>
+      Find Me!
+    </title>
+
+    <script>
+      function onClick() {
+
+        var name = document.getElementById('inputName').value;
+        var surname = document.getElementById('inputSurname').value;
+        var city = document.getElementById('inputCity').value;
+
+        var zip = document.getElementById('inputZip').value;
+        var address = document.getElementById('inputAddress').value;
+        var phone1 = document.getElementById('inputPhone1').value;
+        var phone2 = document.getElementById('inputPhone2').value;
+
+        var email = document.getElementById('inputEmail').value;
+
+        var qrValue = '';
+
+        var checkEmailActivation = document.getElementById('checkEmailActivation')
+
+        if(checkEmailActivation.checked == true){
+          $.ajax({
+            url: 'QrSubscription.php',
+            type: 'POST',
+            data: { Name: name,
+                    Surname: surname,
+                    City: city,
+                    Zip: zip,
+                    Address: address,
+                    Phone1: phone1,
+                    Phone2: phone2,
+                    Email: email
+                  },
+            dataType: "text",
+            success: function(result){
+              //$("#risultato").html(result);
+              const dataArray = result.split(";");
+
+              var activatorLink = document.getElementById('activatorLink');
+              activatorLink.href = dataArray[1];
+              $("#activatorLink").html(dataArray[1]);
+
+              var activatorLinkDiv = document.getElementById('ActivatorLinkDiv');
+              activatorLinkDiv.style.display = 'block';
+
+              generateQr(dataArray[0]);
+
+            },
+            error: function()
+            {
+              alert("Request did not succeed. Reload and try again.");
+            }
+          });
+        }
+
+        else{
+          var activatorLinkDiv = document.getElementById('ActivatorLinkDiv');
+          activatorLinkDiv.style.display = 'none';
+
+          if(!isEmpty(name)){
+            qrValue += "Name: " + name + "\n";
+          }
+
+          if(!isEmpty(surname)){
+            qrValue += "Surname: " + surname + "\n";
+          }
+
+          if(!isEmpty(city)){
+            qrValue += "City: " + city + "\n";
+          }
+
+          if(!isEmpty(zip)){
+            qrValue += "Zip: " + zip + "\n";
+          }
+
+          if(!isEmpty(address)){
+            qrValue += "Address: " + address + "\n";
+          }
+
+          if(!isEmpty(phone1)){
+            qrValue += "Phone: " + phone1 + "\n";
+          }
+
+          if(!isEmpty(phone2)){
+            qrValue += "Phone 2: " + phone2 + "\n";
+          }
+
+          if(!isEmpty(email)){
+            qrValue += "Email: " + email + "\n";
+          }
+        generateQr(qrValue);
+      }
+    }
+
+      function isEmpty(str) {
+        return (!str || str.length === 0 );
+      }
+
+      function generateQr(value){
+        var qr = new QRious({
+          element: document.getElementById('qr'),
+          value: value,
+          level: 'H',
+          size: 180
+        });
+      }
+
+      function save(){
+        var link = document.createElement("a");
+        link.setAttribute('download', "Qr");
+        link.href = qr.toDataURL('image/jpeg');;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      function privacyForEmailActivation(){
+        if(document.getElementById('checkEmailActivation').checked == true){
+          alert("If you enable this functionality, you allow us to store your information" +
+          " in our database. We will not sell nor share your data.")
+        }
+      }
+
+    </script>
+  </head>
+
+  <body>
+<div id="risultato" name="risultato"></div>
+  <div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <form class="row g-3">
+      <div class="col-md-6">
+        <label for="inputName">Name</label>
+        <input type="text" class="form-control" id="inputName" placeholder="John">
+      </div>
+      <div class="col-md-6">
+        <label for="inputSurname">Surname</label>
+        <input type="text" class="form-control" id="inputSurname" placeholder="Doe">
+      </div>
+
+      <div class="col-md-6">
+        <label for="inputCity" class="form-label">City</label>
+        <input type="text" class="form-control" id="inputCity">
+      </div>
+      <div class="col-md-4">
+        <label for="inputState" class="form-label">State</label>
+        <select id="inputState" class="form-select">
+          <option selected>Choose...</option>
+          <option>...</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="inputZip" class="form-label">Zip</label>
+        <input type="text" class="form-control" id="inputZip">
+      </div>
+
+      <div class="col-12">
+        <label for="inputAddress" class="form-label">Address</label>
+        <input type="text" class="form-control" id="inputAddress" placeholder="1234 Main St">
+      </div>
+
+      <div class="col-md-6">
+        <label for="inputPhone1">Phone 1</label>
+        <input type="text" class="form-control" id="inputPhone1" placeholder="+1 555 000 200">
+      </div>
+      <div class="col-md-6">
+        <label for="inputPhone2">Phone 2</label>
+        <input type="text" class="form-control" id="inputPhone2" placeholder="+1 555 000 600">
+      </div>
+
+      <div class="col-12">
+        <label for="inputEmail" class="form-label">Email</label>
+        <input type="email" class="form-control" id="inputEmail" placeholder="example@email.com">
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="checkEmailActivation" onclick="privacyForEmailActivation();">
+          <label class="form-check-label" for="gridCheck" title="To protect your privacy, the QR will not show personal information unless you activate it by the link in your email.">
+            Visible only upon activation
+          </label>
+        </div>
+      </div>
+      <div class="col-12">
+              <button onclick="onClick()" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">Generate QR</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Carry this QR with you</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="container d-flex align-items-center justify-content-center" >
+          <div class="mb-3">
+            <canvas id="qr"></canvas>
+          </div>
+        </div>
+
+        <div id="ActivatorLinkDiv" style="display:none">
+          <div class="mb-3">
+            <p>Use this link to activate your QR code. If you provided an email, we sent it in your inbox as well.</p>
+          </div>
+          <div class="mb-3">
+            <a id="activatorLink" href="#"></a>
+          </div>
+      </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" onclick="save();" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </body>
+
+</html>
