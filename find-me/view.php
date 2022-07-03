@@ -30,7 +30,7 @@
       $result = $statement->get_result();
 
       if($result->num_rows == 0){
-        showError('Invalid linksss.');
+        showError('Invalid links.');
         exit();
       }
       $row = $result->fetch_assoc();
