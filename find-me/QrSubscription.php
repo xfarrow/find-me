@@ -27,22 +27,33 @@
   $email = $connection -> real_escape_string($_POST['Email']);
   $state = "UNKNOWN";
 
-  // generate random strings
-  do{
-    $email_link = randomKey(32);
-    $sql_get_email_link = sprintf("SELECT * FROM Users WHERE email_link='%s'", $connection->real_escape_string($email_link));
-  }while($connection->query($sql_get_email_link)->num_rows > 0);
+  $data_json = json_encode(array("Name" => $name, "Surname" => $surname,
+                                 "City" => $city, "Zip" => $zip,
+                                 "Address" => $address, "Phone1" => $phone1,
+                                 "Phone2" => $phone2, "Email" => $email,
+                                 "State" => $state));
+
+  $cipher = 'aes-128-ctr';
+  $ivlen = openssl_cipher_iv_length($cipher);
+  $iv = openssl_random_pseudo_bytes($ivlen);
+
+  $password = hash('sha256',openssl_random_pseudo_bytes(128));
+
+  $qrValue = openssl_encrypt($data_json, $cipher, $password, 0, $iv);
+  $qrValue = base64_encode($qrValue);
+
+  $iv = base64_encode($iv);
 
   do{
-    $url_link = randomKey(32);
-    $sql_get_url_link = sprintf("SELECT * FROM Users WHERE url_link='%s'", $connection->real_escape_string($url_link));
-  }while($connection->query($sql_get_url_link)->num_rows > 0);
+    $ActivationLink = randomKey(32);
+    $sql_get_ActivationLink = sprintf("SELECT * FROM Users2 WHERE ActivationLink='%s'", $connection->real_escape_string($ActivationLink));
+  }while($connection->query($sql_get_ActivationLink)->num_rows > 0);
 
-  //$stmt = $connection->prepare('INSERT INTO Users (firstName) VALUES (:first_name)',);
-  //$stmt->execute(':first_name', $name);
-  $statement = $connection->prepare('INSERT INTO Users (firstname, lastname, city, state, zip, address, phone1, phone2, email, activated, email_link, url_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?)');
-  $statement->bind_param("sssssssssss", $name, $surname, $city, $state, $zip, $address, $phone1, $phone2, $email, $email_link, $url_link);
+  $statement = $connection->prepare('INSERT INTO Users2 (Password, InitializationVector, ActivationLink, activated) VALUES (?, ?, ?, false)');
+  $statement->bind_param("sss", $password, $iv, $ActivationLink);
   $statement->execute();
+
+  $tableId = $statement->insert_id;
 
   $statement->close();
   $connection->close();
@@ -54,14 +65,14 @@
     $httpProtocol = "http://";
   }
 
-  $email_link = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/activate.php?email_link=" . $email_link;
-  $url_link = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/view.php?url_link=" . $url_link;
+  $ActivationLink = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/activate.php?activationLink=" . $ActivationLink;
+  $qrValue = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/view.php?id=" . $tableId . "&data=" . $qrValue;
 
   if(!empty($email)){
-    sendEmail($email, $email_link);
+    sendEmail($email, $ActivationLink);
   }
 
-  echo $url_link.";".$email_link;
+  echo $qrValue . "%{DELIMITER}%" . $ActivationLink;
 
   function randomKey($length) {
       $pool = array_merge(range(0,9), range('a', 'z'),range('A', 'Z'));
@@ -77,7 +88,6 @@
 
     $mail = new PHPMailer(true);
     //$mail->SMTPDebug = 3;
-
     // sender info
     $mail->isSMTP();
     $mail->Host = $GLOBALS['smtp_host'];

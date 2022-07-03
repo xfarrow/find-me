@@ -44,7 +44,7 @@
             dataType: "text",
             success: function(result){
               //$("#risultato").html(result);
-              const dataArray = result.split(";");
+              const dataArray = result.split("%{DELIMITER}%");
 
               var activatorLink = document.getElementById('activatorLink');
               activatorLink.href = dataArray[1];
@@ -124,13 +124,6 @@
         link.remove();
       }
 
-      function privacyForEmailActivation(){
-        if(document.getElementById('checkEmailActivation').checked == true){
-          alert("If you enable this functionality, you allow us to store your information" +
-          " in our database. We will not sell nor share your data.")
-        }
-      }
-
     </script>
   </head>
 
@@ -184,7 +177,7 @@
 
       <div class="col-12">
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="checkEmailActivation" onclick="privacyForEmailActivation();">
+          <input class="form-check-input" type="checkbox" id="checkEmailActivation">
           <label class="form-check-label" for="gridCheck" title="To protect your privacy, the QR will not show personal information unless you activate it by the link in your email.">
             Visible only upon activation
           </label>

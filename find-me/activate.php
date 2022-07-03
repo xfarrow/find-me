@@ -13,17 +13,17 @@
 
       require './includes/credentials.php';
 
-      if(!isset($_GET['email_link'])){
+      if(!isset($_GET['activationLink'])){
         showError('Invalid link.');
         exit();
       }
 
       $connection = new mysqli($server, $database_username, $database_password, $database_name);
 
-      $email_link = $connection -> real_escape_string($_GET['email_link']);
+      $activationLink = $connection -> real_escape_string($_GET['activationLink']);
 
-      $statement = $connection->prepare("UPDATE Users SET activated = true WHERE email_link = ?");
-      $statement->bind_param("s", $email_link);
+      $statement = $connection->prepare("UPDATE Users2 SET activated = true WHERE ActivationLink = ?");
+      $statement->bind_param("s", $activationLink);
       if($statement->execute()){
         showSuccess();
       }
