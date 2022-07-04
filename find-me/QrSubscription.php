@@ -10,71 +10,29 @@
   use PHPMailer\PHPMailer\PHPMailer;
 
   $connection = new mysqli($server, $database_username, $database_password, $database_name);
-
-  // Check connection
   if ($connection -> connect_errno) {
     die();
   }
 
-  // filter for SQL Injection
-  $name = $connection -> real_escape_string($_POST['Name']);
-  $surname = $connection -> real_escape_string($_POST['Surname']);
-  $city = $connection -> real_escape_string($_POST['City']);
-  $zip = $connection -> real_escape_string($_POST['Zip']);
-  $address = $connection -> real_escape_string($_POST['Address']);
-  $phone1 = $connection -> real_escape_string($_POST['Phone1']);
-  $phone2 = $connection -> real_escape_string($_POST['Phone2']);
-  $email = $connection -> real_escape_string($_POST['Email']);
-  $state = "UNKNOWN";
+  $data_json = get_data_from_post_to_json($connection);
 
-  $data_json = json_encode(array("Name" => $name, "Surname" => $surname,
-                                 "City" => $city, "Zip" => $zip,
-                                 "Address" => $address, "Phone1" => $phone1,
-                                 "Phone2" => $phone2, "Email" => $email,
-                                 "State" => $state));
+  $encrypted_data = encrypt($data_json);
 
-  $cipher = 'aes-128-ctr';
-  $ivlen = openssl_cipher_iv_length($cipher);
-  $iv = openssl_random_pseudo_bytes($ivlen);
+  $activationLink = generate_unique_activation_link($connection, 32);
 
-  $password = hash('sha256',openssl_random_pseudo_bytes(128));
+  $row_id = insert_into_table($encrypted_data, $activationLink, $connection);
 
-  $qrValue = openssl_encrypt($data_json, $cipher, $password, 0, $iv);
-  $qrValue = base64_encode($qrValue);
+  $activationLink = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/Activate.php?activationLink=" . $activationLink;
+  $encrypted_data['Encrypted'] = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/View.php?id=" . $row_id . "&data=" . $encrypted_data['Encrypted'];
 
-  $iv = base64_encode($iv);
-
-  do{
-    $ActivationLink = randomKey(32);
-    $sql_get_ActivationLink = sprintf("SELECT * FROM Users2 WHERE ActivationLink='%s'", $connection->real_escape_string($ActivationLink));
-  }while($connection->query($sql_get_ActivationLink)->num_rows > 0);
-
-  $statement = $connection->prepare('INSERT INTO Users2 (Password, InitializationVector, ActivationLink, activated) VALUES (?, ?, ?, false)');
-  $statement->bind_param("sss", $password, $iv, $ActivationLink);
-  $statement->execute();
-
-  $tableId = $statement->insert_id;
-
-  $statement->close();
-  $connection->close();
-
-  if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) {
-    $httpProtocol = "https://";
-  }
-  else{
-    $httpProtocol = "http://";
+  $email = json_decode($data_json,true)['Email'];
+  if( !empty($email) ){
+    send_email($email, $activationLink);
   }
 
-  $ActivationLink = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/activate.php?activationLink=" . $ActivationLink;
-  $qrValue = $httpProtocol . $_SERVER['SERVER_NAME'] . "/find-me/view.php?id=" . $tableId . "&data=" . $qrValue;
+  echo $encrypted_data['Encrypted'] . "%{DELIMITER}%" . $activationLink;
 
-  if(!empty($email)){
-    sendEmail($email, $ActivationLink);
-  }
-
-  echo $qrValue . "%{DELIMITER}%" . $ActivationLink;
-
-  function randomKey($length) {
+  function random_key($length) {
       $pool = array_merge(range(0,9), range('a', 'z'),range('A', 'Z'));
       $key = '';
 
@@ -84,7 +42,7 @@
       return $key;
   }
 
-  function sendEmail($email, $link){
+  function send_email($email, $link){
 
     $mail = new PHPMailer(true);
     //$mail->SMTPDebug = 3;
@@ -108,6 +66,84 @@
     return $mail->send();
 
     //echo 'Mailer Error: ' . $mail->ErrorInfo;
+  }
+
+  function get_data_from_post_to_json($connection){
+    
+    // filter for SQL Injection
+    $name = $connection -> real_escape_string($_POST['Name']);
+    $surname = $connection -> real_escape_string($_POST['Surname']);
+    $city = $connection -> real_escape_string($_POST['City']);
+    $state = $connection -> real_escape_string($_POST['State']);
+    $zip = $connection -> real_escape_string($_POST['Zip']);
+    $address = $connection -> real_escape_string($_POST['Address']);
+    $phone1 = $connection -> real_escape_string($_POST['Phone1']);
+    $phone2 = $connection -> real_escape_string($_POST['Phone2']);
+    $email = $connection -> real_escape_string($_POST['Email']);
+
+    $data_json = json_encode(array("Name" => $name, "Surname" => $surname,
+                              "City" => $city, "Zip" => $zip,
+                              "Address" => $address, "Phone1" => $phone1,
+                              "Phone2" => $phone2, "Email" => $email,
+                              "State" => $state));
+
+    return $data_json;
+  }
+
+  function encrypt($data){
+    
+    $cipher = 'aes-128-ctr';
+
+    $ivlen = openssl_cipher_iv_length($cipher);
+    $iv = openssl_random_pseudo_bytes($ivlen);
+
+    $password = hash('sha256',openssl_random_pseudo_bytes(128));
+
+    $encrypted_data = openssl_encrypt($data, $cipher, $password, 0, $iv);
+    $encrypted_data = base64_encode($encrypted_data);
+
+    $iv = base64_encode($iv);
+
+    return array('Encrypted' => $encrypted_data,
+                'Password' => $password,
+                'InitVector' => $iv);
+  }
+
+  function generate_unique_activation_link($connection, $length){
+    
+    do{
+      $activationLink = random_key($length);
+      $sql_get_activationLink = sprintf("SELECT * FROM Users2 WHERE ActivationLink='%s'", $connection->real_escape_string($activationLink));
+    }while($connection->query($sql_get_activationLink)->num_rows > 0);
+
+    return $activationLink;
+
+  }
+
+  function insert_into_table($encrypted_data, $activationLink, $connection){
+
+    $password = $encrypted_data['Password'];
+    $iv = $encrypted_data['InitVector'];
+
+    $statement = $connection->prepare('INSERT INTO Users2 (Password, InitializationVector, ActivationLink, activated) VALUES (?, ?, ?, false)');
+    $statement->bind_param("sss", $password, $iv, $activationLink);
+    $statement->execute();
+  
+    $rowId = $statement->insert_id;
+  
+    $statement->close();
+    $connection->close();
+
+    return $rowId;
+  }
+
+  function http_protocol(){
+    if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443) {
+      return "https://";
+    }
+    else{
+      return "http://";
+    }
   }
 
 ?>
