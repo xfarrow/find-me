@@ -19,6 +19,9 @@
       }
 
       $connection = new mysqli($server, $database_username, $database_password, $database_name);
+      if ($connection -> connect_errno) {
+        die();
+      }
 
       $activationLink = $connection -> real_escape_string($_GET['activationLink']);
 
