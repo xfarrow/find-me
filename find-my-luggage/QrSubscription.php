@@ -1,7 +1,8 @@
 <?php
+  
   // display errors (debug)
-  ini_set('display_errors', '1');
-  error_reporting(E_ALL);
+  //ini_set('display_errors', '1');
+  //error_reporting(E_ALL);
 
   require './includes/phpmailer/PHPMailer.php';
   require './includes/phpmailer/SMTP.php';
@@ -13,22 +14,25 @@
   if ($connection -> connect_errno) {
     die();
   }
-
+  
   $data_json = get_data_from_post_to_json($connection);
   $encrypted_data = encrypt($data_json);
-
   $activationLink = generate_unique_activation_link($connection, 32);
-  $row_id = insert_into_table($encrypted_data, $activationLink, $connection);
 
-  $activationLink = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/Activate.php?activationLink=" . $activationLink;
-  $encrypted_data['Encrypted'] = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/View.php?id=" . $row_id . "&data=" . $encrypted_data['Encrypted'];
+  $row_id = insert_into_table($encrypted_data, $activationLink, $connection);
   
+  // Generate activationLink and qrValue
+  $activationLink = http_protocol() . $_SERVER['SERVER_NAME'] . str_replace($_SERVER['DOCUMENT_ROOT'], "", dirname(__FILE__)) . "/Activate.php?activationLink=" . $activationLink;
+  $qrValue = http_protocol() . $_SERVER['SERVER_NAME'] . str_replace($_SERVER['DOCUMENT_ROOT'], "", dirname(__FILE__)) . "/View.php?id=" . $row_id . "&data=" . $encrypted_data['Encrypted'];
+    
+  // If an email has been provided, send it the activationLink
   $email = json_decode($data_json,true)['Email'];
   if( !empty($email) ){
     send_email($email, $activationLink);
   }
-
-  echo $encrypted_data['Encrypted'] . "%{DELIMITER}%" . $activationLink;
+  
+  // Send the result to the Ajax request
+  echo $qrValue . "%{DELIMITER}%" . $activationLink;
 
   function random_key($length) {
       $pool = array_merge(range(0,9), range('a', 'z'),range('A', 'Z'));

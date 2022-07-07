@@ -43,7 +43,7 @@
                   },
             dataType: "text",
             success: function(result){
-              //$("#risultato").html(result);
+              //$("#debug").html(result);
               const dataArray = result.split("%{DELIMITER}%");
 
               var activatorLink = document.getElementById('activatorLink');
@@ -132,7 +132,7 @@
   </head>
 
   <body>
-<div id="risultato" name="risultato"></div>
+<div id="debug" name="debug"></div>
   <div class="container d-flex align-items-center justify-content-center min-vh-100">
     <form class="row g-3">
       <div class="col-md-6">
