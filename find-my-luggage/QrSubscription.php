@@ -15,16 +15,14 @@
   }
 
   $data_json = get_data_from_post_to_json($connection);
-
   $encrypted_data = encrypt($data_json);
 
   $activationLink = generate_unique_activation_link($connection, 32);
-
   $row_id = insert_into_table($encrypted_data, $activationLink, $connection);
 
   $activationLink = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/Activate.php?activationLink=" . $activationLink;
   $encrypted_data['Encrypted'] = http_protocol() . $_SERVER['SERVER_NAME'] . "/find-my-luggage/find-my-luggage/View.php?id=" . $row_id . "&data=" . $encrypted_data['Encrypted'];
-
+  
   $email = json_decode($data_json,true)['Email'];
   if( !empty($email) ){
     send_email($email, $activationLink);
@@ -45,7 +43,8 @@
   function send_email($email, $link){
 
     $mail = new PHPMailer(true);
-    //$mail->SMTPDebug = 3;
+    //$mail->SMTPDebug = 3; // debug
+
     // sender info
     $mail->isSMTP();
     $mail->Host = $GLOBALS['smtp_host'];
