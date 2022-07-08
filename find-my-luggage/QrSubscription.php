@@ -1,5 +1,5 @@
 <?php
-  
+
   // display errors (debug)
   //ini_set('display_errors', '1');
   //error_reporting(E_ALL);
@@ -14,23 +14,23 @@
   if ($connection -> connect_errno) {
     die();
   }
-  
+
   $data_json = get_data_from_post_to_json($connection);
   $encrypted_data = encrypt($data_json);
   $activationLink = generate_unique_activation_link($connection, 32);
 
   $row_id = insert_into_table($encrypted_data, $activationLink, $connection);
-  
+
   // Generate activationLink and qrValue
   $activationLink = http_protocol() . $_SERVER['SERVER_NAME'] . str_replace($_SERVER['DOCUMENT_ROOT'], "", dirname(__FILE__)) . "/Activate.php?activationLink=" . $activationLink;
   $qrValue = http_protocol() . $_SERVER['SERVER_NAME'] . str_replace($_SERVER['DOCUMENT_ROOT'], "", dirname(__FILE__)) . "/View.php?id=" . $row_id . "&data=" . $encrypted_data['Encrypted'];
-    
+
   // If an email has been provided, send it the activationLink
   $email = json_decode($data_json,true)['Email'];
   if( !empty($email) ){
     send_email($email, $activationLink);
   }
-  
+
   // Send the result to the Ajax request
   echo $qrValue . "%{DELIMITER}%" . $activationLink;
 
@@ -72,7 +72,7 @@
   }
 
   function get_data_from_post_to_json($connection){
-    
+
     // filter for SQL Injection
     $name = $connection -> real_escape_string($_POST['Name']);
     $surname = $connection -> real_escape_string($_POST['Surname']);
@@ -94,13 +94,13 @@
   }
 
   function encrypt($data){
-    
+
     $cipher = 'aes-128-ctr';
 
     $ivlen = openssl_cipher_iv_length($cipher);
     $iv = openssl_random_pseudo_bytes($ivlen);
 
-    $password = hash('sha256',openssl_random_pseudo_bytes(128));
+    $password = hash('sha256',openssl_random_pseudo_bytes(64));
 
     $encrypted_data = openssl_encrypt($data, $cipher, $password, 0, $iv);
     $encrypted_data = base64_encode($encrypted_data);
@@ -113,7 +113,7 @@
   }
 
   function generate_unique_activation_link($connection, $length){
-    
+
     do{
       $activationLink = random_key($length);
       $sql_get_activationLink = sprintf("SELECT * FROM Users2 WHERE ActivationLink='%s'", $connection->real_escape_string($activationLink));
@@ -131,9 +131,9 @@
     $statement = $connection->prepare('INSERT INTO Users2 (Password, InitializationVector, ActivationLink, activated) VALUES (?, ?, ?, false)');
     $statement->bind_param("sss", $password, $iv, $activationLink);
     $statement->execute();
-  
+
     $rowId = $statement->insert_id;
-  
+
     $statement->close();
     $connection->close();
 

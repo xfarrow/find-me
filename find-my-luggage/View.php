@@ -44,6 +44,10 @@
         $iv = base64_decode($row['InitializationVector']);
 
         $decrypted_data = openssl_decrypt($data, 'aes-128-ctr', $password, 0, $iv);
+        if($decrypted_data == false){
+          showError('Invalid link.');
+          exit();
+        }
         $dataArray = json_decode($decrypted_data, true);
 
 
