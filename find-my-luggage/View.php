@@ -11,14 +11,17 @@
       ini_set('display_errors', '1');
       error_reporting(E_ALL);
 
-      require './includes/credentials.php';
+      require './includes/Credentials.php';
 
       if(!isset($_GET['id']) || !isset($_GET['data'])){
         showError('Invalid link.');
         exit();
       }
 
-      $connection = new mysqli($server, $database_username, $database_password, $database_name);
+      $connection = new mysqli(DATABASE_ADDRESS, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_NAME);
+      if ($connection -> connect_errno) {
+        die();
+      }
 
       $id_table = $connection -> real_escape_string($_GET['id']);
       $data = base64_decode($_GET['data']);

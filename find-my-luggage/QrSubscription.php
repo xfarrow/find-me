@@ -7,10 +7,11 @@
   require './includes/phpmailer/PHPMailer.php';
   require './includes/phpmailer/SMTP.php';
   require './includes/phpmailer/Exception.php';
-  require './includes/credentials.php';
+  require './includes/Credentials.php';
   use PHPMailer\PHPMailer\PHPMailer;
 
-  $connection = new mysqli($server, $database_username, $database_password, $database_name);
+
+  $connection = new mysqli(DATABASE_ADDRESS, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_NAME);
   if ($connection -> connect_errno) {
     die();
   }
@@ -34,6 +35,7 @@
   // Send the result to the Ajax request
   echo $qrValue . "%{DELIMITER}%" . $activationLink;
 
+  // this function is used to egnerate a random activation key
   function random_key($length) {
       $pool = array_merge(range(0,9), range('a', 'z'),range('A', 'Z'));
       $key = '';
@@ -51,17 +53,17 @@
 
     // sender info
     $mail->isSMTP();
-    $mail->Host = $GLOBALS['smtp_host'];
+    $mail->Host = SMTP_HOST;
     $mail->SMTPAuth = true;
-    $mail->Username = $GLOBALS['smtp_username'];
-    $mail->Password = $GLOBALS['smtp_password'];
+    $mail->Username = SMTP_USERNAME;
+    $mail->Password = SMTP_PASSWORD;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    $mail->Port = 465;
-    $mail->setFrom($GLOBALS['smtp_username'], 'Find-Me Team');
+    $mail->Port = SMTP_PORT;
+    $mail->setFrom(SMTP_USERNAME, 'Find-My-Luggage Team');
 
     $mail->addAddress($email);
-    $mail->Subject = 'Find-me QR link activator';
-    $mailContent = "<h1>Find-me QR link activator</h1>
+    $mail->Subject = 'Find-My-Luggage QR link activator';
+    $mailContent = "<h1>Find-My-Luggage QR link activator</h1>
     Click on <a href=\"$link\">THIS LINK </a> to activate the QR in case of lost item.";
     $mail->Body = $mailContent;
     $mail->isHTML(true);

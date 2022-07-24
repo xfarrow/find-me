@@ -11,14 +11,14 @@
       ini_set('display_errors', '1');
       error_reporting(E_ALL);
 
-      require './includes/credentials.php';
+      require './includes/Credentials.php';
 
       if(!isset($_GET['activationLink'])){
         showError('Invalid link.');
         exit();
       }
 
-      $connection = new mysqli($server, $database_username, $database_password, $database_name);
+      $connection = new mysqli(DATABASE_ADDRESS, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_NAME);
       if ($connection -> connect_errno) {
         die();
       }
