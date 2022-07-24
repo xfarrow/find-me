@@ -3,6 +3,7 @@ It creates a QR with your personal informations to attach on items like luggages
 
 It also allows you to hide (encrypt) your personal informations unless you explicitly tell it not to, in order to protect your privacy against improper Qr scans.
 
+<noscript><a href="https://liberapay.com/xfarrow/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
 
 
 ## Mode 1: Plain text
