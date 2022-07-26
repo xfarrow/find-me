@@ -13,6 +13,8 @@
     <script>
       function onClick() {
 
+        clearQrCanvas();
+
         var name = document.getElementById('inputName').value;
         var surname = document.getElementById('inputSurname').value;
         var city = document.getElementById('inputCity').value;
@@ -47,16 +49,16 @@
             dataType: "text",
             success: function(result){
               //$("#debug").html(result);
-              const dataArray = result.split("%{DELIMITER}%");
+              const json = JSON.parse(result);
 
               var activatorLink = document.getElementById('activatorLink');
-              activatorLink.href = dataArray[1];
-              $("#activatorLink").html(dataArray[1]);
+              activatorLink.href = json.ActivationLink;
+              $("#activatorLink").html(json.ActivationLink);
 
               var activatorLinkDiv = document.getElementById('ActivatorLinkDiv');
               activatorLinkDiv.style.display = 'block';
 
-              generateQr(dataArray[0]);
+              generateQr(json.QrValue);
 
             },
             error: function()
@@ -129,6 +131,12 @@
         document.body.appendChild(link);
         link.click();
         link.remove();
+      }
+
+      function clearQrCanvas(){
+        var canvas = document.getElementById('qr');
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
       }
 
     </script>

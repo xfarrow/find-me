@@ -32,8 +32,9 @@
     send_email($email, $activationLink);
   }
 
+  $result = json_encode(array("QrValue" => $qrValue, "ActivationLink" => $activationLink));
   // Send the result to the Ajax request
-  echo $qrValue . "%{DELIMITER}%" . $activationLink;
+  echo $result;
 
   // this function is used to egnerate a random activation key
   function random_key($length) {
